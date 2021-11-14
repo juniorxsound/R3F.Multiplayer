@@ -41,6 +41,35 @@ const server = app.listen(process.env.PORT || 4444, () => {
 
 const ioServer = new Server(server);
 
+let clients = {};
+
 ioServer.on('connection', client => {
     console.log('User ' + client.id + ' connected');
+
+    client.emit('introduction', client.id, ioServer.engine.clientsCount, Object.keys(clients));
+
+    //Add a new client indexed by his id
+    clients[client.id] = {
+        position: [0, 0, 0],
+        rotation: [0, 0, 0]
+    };
+
+    ioServer.sockets.emit('userConnected', ioServer.engine.clientsCount, client.id, Object.keys(clients));
+
+    client.on('move', (payload) => {
+        const { id, rotation, position } = payload;
+        clients[id].position = position;
+        clients[id].rotation = rotation;
+    });
+
+    client.on('disconnect', () => {
+
+        //Delete this client from the object
+        delete clients[client.id];
+
+        ioServer.sockets.emit('userDisconnected', ioServer.engine.clientsCount, client.id, Object.keys(clients));
+
+        console.log('User ' + client.id + ' dissconeted');
+
+    });
 });
