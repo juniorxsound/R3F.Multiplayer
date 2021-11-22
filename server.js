@@ -19,6 +19,7 @@ router.use('*', (req, res) => {
 
 // Create express app and listen on port 4444
 const app = express()
+app.use(express.static('dist'))
 app.use(router)
 const server = app.listen(process.env.PORT || 4444, () => {
     console.log(`Listening on port http://localhost:4444...`)
@@ -26,12 +27,37 @@ const server = app.listen(process.env.PORT || 4444, () => {
 
 const ioServer = new Server(server)
 
+let clients = {}
+
+// Socket app msgs
 ioServer.on('connection', (client) => {
     console.log(
-        'User ' +
-            client.id +
-            ' connected, there are ' +
-            io.engine.clientsCount +
-            ' clients connected'
+        `User ${client.id} connected, there are currently ${ioServer.engine.clientsCount} users connected`
     )
+
+    //Add a new client indexed by his id
+    clients[client.id] = {
+        position: [0, 0, 0],
+        rotation: [0, 0, 0],
+    }
+
+    ioServer.sockets.emit('move', clients)
+
+    client.on('move', ({ id, rotation, position }) => {
+        clients[id].position = position
+        clients[id].rotation = rotation
+
+        ioServer.sockets.emit('move', clients)
+    })
+
+    client.on('disconnect', () => {
+        console.log(
+            `User ${client.id} disconnected, there are currently ${ioServer.engine.clientsCount} users connected`
+        )
+
+        //Delete this client from the object
+        delete clients[client.id]
+
+        ioServer.sockets.emit('move', clients)
+    })
 })

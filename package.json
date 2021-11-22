@@ -3,7 +3,8 @@
     "scripts": {
         "build": "vite build",
         "dev": "nodemon develop.js",
-        "format": "prettier --write \"**/*.{js,jsx,json,md,ts,tsx,css}\""
+        "start": "node server.js",
+        "format": "prettier --write \"src/*.{js,jsx,json,md,ts,tsx,css}\""
     },
     "dependencies": {
         "express": "^4.17.1",
